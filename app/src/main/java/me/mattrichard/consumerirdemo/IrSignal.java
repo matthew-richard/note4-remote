@@ -18,6 +18,8 @@ import java.util.Map;
  */
 public class IrSignal {
 
+    public static final String TAG = "me.mattrichard.consumerirdemo.IrSignal";
+
     public enum Action {
         POWER_TOGGLE,
         POWER_ON,
@@ -28,22 +30,56 @@ public class IrSignal {
     public IrSignal(InputStream file) throws YamlException {
         // TODO: Implement IrSignal initialization from pronto file
 
-        Map yaml = (Map) new YamlReader(new InputStreamReader(file)).read();
+        YamlReader reader = new YamlReader(new InputStreamReader(file));
+        Map<String, Object> yaml = (Map<String,Object>) reader.read();
 
-        Log.d("blah blah blah", "ACTION:" + (String)yaml.get("action"));
-        Log.d("blah blah blah", "PRONTO:" + (String)yaml.get("pronto"));
+        deviceBrand = normalizeString((String)yaml.get("brand"));
+        deviceModel = normalizeString((String)yaml.get("model"));
+        deviceType = IrDeviceType.valueOf(normalizeString((String)yaml.get("device"))
+                .toUpperCase());
+
+        if (!yaml.containsKey("pronto")) {
+            Log.w(TAG, "A single IrSignal is being constructed from a file containing multiple"
+                       + "yaml files.");
+            yaml = (Map<String, Object>) reader.read();
+        }
+        action = Action.valueOf(normalizeString((String)yaml.get("action")));
+        Object pronto = yaml.get("pronto");
+        processPronto(pronto);
     }
 
-    private IrSignal(List file, int subsignal_index) {
-        // TODO: Implement Ir subsignal initialization from pronto file
+    private IrSignal(String devBrand, String devModel, IrDeviceType devType, Action action,
+                     Object pronto) {
+        deviceBrand = devBrand;
+        deviceModel = devModel;
+        deviceType = devType;
+
+        this.action = action;
+        processPronto(pronto);
     }
 
-    public int getCycleDuration() {
-        return Math.round(1000000.0f / getFrequency());
+
+    private static String normalizeString(String s) {
+        return s.toLowerCase().replace(' ','_').trim();
+    }
+
+    public static void setTransmitter(ConsumerIrManager CIM) {
+        mCIM = CIM;
+    }
+
+    public static int getCycleDuration(int frequency) {
+        return Math.round(1000000.0f / frequency);
+    }
+
+    private void processPronto(Object pronto) {
+        // TODO: Implement processPronto()
+
+        // check if list or string
+        Log.d(IrSignal.TAG, pronto.getClass().getName());
     }
 
     public boolean isMacro() {
-        return subsignals != null;
+        return patterns.size() > 1;
     }
 
     public void transmit() throws Exception {
@@ -53,50 +89,46 @@ public class IrSignal {
             );
         }
 
-        if (!isMacro()) {
-            int[] pattern_in_ms = pattern.clone();
-            for (int i = 0; i < pattern.length; i++)
-                pattern_in_ms[i] *= getCycleDuration();
-            mCIM.transmit(getFrequency(), pattern_in_ms);
-        } else {
-            for (IrSignal signal : subsignals)
-                signal.transmit();
+        for (int i = 0; i < patterns.size(); i++) {
+            mCIM.transmit(frequencies.get(i), patterns.get(i));
         }
     }
 
-    public static void setTransmitter(ConsumerIrManager CIM) {
-        mCIM = CIM;
-    }
-
     private void initialize() {
-        pattern = null;
-        subsignals = null;
+        patterns = null;
         deviceBrand = null;
         deviceModel = null;
-        frequency = 0;
+        frequencies = null;
         mCIM = null;
         action = null;
         deviceType = null;
     }
 
-    public String getDeviceBrand() {
-        return deviceBrand;
+
+    public List<int[]> getPatterns() {
+        return patterns;
     }
 
     public int[] getPattern() {
-        return pattern;
+        if (!isMacro())
+            return patterns.get(0);
+        else return null;
     }
 
     public int getFrequency() {
-        return frequency;
+        return frequencies.get(0);
+    }
+
+    public Action getAction() {
+        return action;
     }
 
     public String getDeviceModel() {
         return deviceModel;
     }
 
-    public IrSignal[] getSubsignals() {
-        return subsignals;
+    public String getDeviceBrand() {
+        return deviceBrand;
     }
 
     public IrDeviceType getDeviceType() {
@@ -107,10 +139,9 @@ public class IrSignal {
     static ConsumerIrManager mCIM;
 
     /* Signal data */
-    int[] pattern;
-    int frequency;
+    List<int[]> patterns;
+    List<Integer> frequencies;
     Action action;
-    IrSignal[] subsignals;
 
     /* Device data */
     String deviceBrand;
