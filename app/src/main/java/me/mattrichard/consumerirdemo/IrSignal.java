@@ -24,6 +24,8 @@ public class IrSignal {
         POWER_TOGGLE,
         POWER_ON,
         POWER_OFF,
+        VOLUME_UP,
+        VOLUME_DOWN,
         OTHER
     }
 
