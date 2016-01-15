@@ -101,7 +101,8 @@ public class IrSignal {
             Object pronto = yaml.get("pronto");
             signals.add(new IrSignal(deviceBrand, deviceModel, deviceType, action, pronto));
 
-            yaml = (Map<String, Object>) reader.read();
+            try { yaml = (Map<String, Object>) reader.read(); }
+            catch (ClassCastException e) { yaml = null; /* Extra --- at end of file */ }
         }
 
         return signals;
