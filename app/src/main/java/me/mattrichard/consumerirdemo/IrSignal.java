@@ -21,11 +21,15 @@ public class IrSignal {
     public static final String TAG = "me.mattrichard.consumerirdemo.IrSignal";
 
     public enum Action {
-        POWER_TOGGLE,
-        POWER_ON,
-        POWER_OFF,
-        VOLUME_UP,
-        VOLUME_DOWN,
+        POWER_TOGGLE, POWER_ON, POWER_OFF,
+        CHANNEL_UP, CHANNEL_DOWN,
+        VOLUME_UP, VOLUME_DOWN,
+        MUTE,
+        MENU,
+        ENTER,
+        UP, DOWN, LEFT, RIGHT,
+        EXIT,
+        DIGIT_0, DIGIT_1, DIGIT_2, DIGIT_3, DIGIT_4, DIGIT_5, DIGIT_6, DIGIT_7, DIGIT_8, DIGIT_9,
         OTHER
     }
 
