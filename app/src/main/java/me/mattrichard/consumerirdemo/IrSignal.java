@@ -92,7 +92,7 @@ public class IrSignal {
         if (!yaml.containsKey("pronto"))
             yaml = (Map<String, Object>) reader.read();
 
-        while (yaml.containsKey("pronto")) {
+        while (yaml != null && yaml.containsKey("pronto")) {
             Action action = Action.valueOf(normalizeString((String)yaml.get("action")).toUpperCase());
             Object pronto = yaml.get("pronto");
             signals.add(new IrSignal(deviceBrand, deviceModel, deviceType, action, pronto));

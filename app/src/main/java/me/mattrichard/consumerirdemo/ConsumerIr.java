@@ -27,6 +27,7 @@ import android.util.Log;
 import com.esotericsoftware.yamlbeans.YamlException;
 
 import java.io.InputStreamReader;
+import java.util.List;
 //import com.example.android.apis.R;
 /**
  * App that transmit an IR code
@@ -87,8 +88,13 @@ public class ConsumerIr extends Activity {
                 return;
             }
             try {
-                IrSignal samsungSignal = new IrSignal(getResources().openRawResource(R.raw.samsung_volup));
-                samsungSignal.transmit();
+                //IrSignal samsungSignal = new IrSignal(getResources().openRawResource(R.raw.samsung_volup));
+                //samsungSignal.transmit();
+                List<IrSignal> signals = IrSignal.readSignalsFromFile(getResources().openRawResource(R.raw.samsung));
+                for (IrSignal signal : signals) {
+                    if (signal.action == IrSignal.Action.VOLUME_DOWN)
+                        signal.transmit();
+                }
             } catch (YamlException e) {
 
             }
