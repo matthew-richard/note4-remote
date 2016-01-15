@@ -21,6 +21,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.hardware.ConsumerIrManager;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.util.Log;
 
@@ -53,6 +54,8 @@ public class ConsumerIr extends Activity {
     private static final String TAG = "ConsumerIrTest";
     TextView mFreqsText;
     ConsumerIrManager mCIR;
+    List<IrSignal> mSignals;
+
     /**
      * Initialization of the Activity after it is first created.  Must at least
      * call {@link android.app.Activity#setContentView setContentView()} to
@@ -65,9 +68,20 @@ public class ConsumerIr extends Activity {
 
         // Get a reference to the ConsumerIrManager
         mCIR = (ConsumerIrManager)getSystemService(Context.CONSUMER_IR_SERVICE);
+        if (!mCIR.hasIrEmitter()) {
+            Log.e(TAG, "No IR Emitter found\n");
+            return;
+        }
 
         // Tell IrSignal what device to transmit on
         IrSignal.setTransmitter(mCIR);
+
+        // Read list of signals from raw resource file
+        try {
+            mSignals = IrSignal.readSignalsFromFile(getResources().openRawResource(R.raw.samsung));
+        } catch (YamlException e) {
+            Log.e(ConsumerIr.TAG, "ERROR: Invalid YAML signals file");
+        }
 
         // See assets/res/any/layout/consumer_ir.xml for this
         // view layout definition, which is being set here as
@@ -83,20 +97,17 @@ public class ConsumerIr extends Activity {
 
     View.OnClickListener mSendClickListener = new View.OnClickListener() {
         public void onClick(View v) {
-            if (!mCIR.hasIrEmitter()) {
-                Log.e(TAG, "No IR Emitter found\n");
-                return;
-            }
-            try {
-                //IrSignal samsungSignal = new IrSignal(getResources().openRawResource(R.raw.samsung_volup));
-                //samsungSignal.transmit();
-                List<IrSignal> signals = IrSignal.readSignalsFromFile(getResources().openRawResource(R.raw.samsung));
-                for (IrSignal signal : signals) {
-                    if (signal.action == IrSignal.Action.VOLUME_DOWN)
-                        signal.transmit();
-                }
-            } catch (YamlException e) {
+            for (IrSignal signal : mSignals) {
+                IrSignal.Action action = null;
 
+                try {
+                    action = IrSignal.Action.valueOf((
+                            (EditText)findViewById(R.id.command_field)).getText()
+                            .toString().trim().toUpperCase().replace(" ","_"));
+                } catch (Exception e) {}
+
+                if (signal.action == action)
+                    signal.transmit();
             }
 
             // A pattern of alternating series of carrier on and off periods measured in
