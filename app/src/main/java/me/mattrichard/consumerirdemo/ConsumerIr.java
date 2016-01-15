@@ -64,6 +64,8 @@ public class ConsumerIr extends Activity {
 
         // Get a reference to the ConsumerIrManager
         mCIR = (ConsumerIrManager)getSystemService(Context.CONSUMER_IR_SERVICE);
+
+        // Tell IrSignal what device to transmit on
         IrSignal.setTransmitter(mCIR);
 
         // See assets/res/any/layout/consumer_ir.xml for this

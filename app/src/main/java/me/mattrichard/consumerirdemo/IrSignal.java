@@ -68,6 +68,39 @@ public class IrSignal {
         return s.toLowerCase().replace(' ','_').trim();
     }
 
+    public static List<IrSignal> readSignalsFromFile(InputStream file) throws YamlException {
+        List<IrSignal> signals = new ArrayList<>();
+
+        // Read first (--- delimited) YAML file in 'file'. This may or may not contain
+        // an actual pattern, but it must contain device info (brand, model, type).
+        YamlReader reader = new YamlReader(new InputStreamReader(file));
+        Map<String, Object> yaml = (Map<String,Object>) reader.read();
+
+        String deviceBrand, deviceModel = null;
+        IrDeviceType deviceType = null;
+        deviceBrand = normalizeString((String)yaml.get("brand"));
+        if (yaml.containsKey("model"))
+            deviceModel = normalizeString((String)yaml.get("model"));
+        else deviceModel = "ANY";
+        deviceType = IrDeviceType.valueOf(normalizeString((String)yaml.get("device"))
+                .toUpperCase());
+
+        // Start reading actual signal info, which may start in the first YAML file
+        // (which contains device info), or in the next one.
+        if (!yaml.containsKey("pronto"))
+            yaml = (Map<String, Object>) reader.read();
+
+        while (yaml.containsKey("pronto")) {
+            Action action = Action.valueOf(normalizeString((String)yaml.get("action")).toUpperCase());
+            Object pronto = yaml.get("pronto");
+            signals.add(new IrSignal(deviceBrand, deviceModel, deviceType, action, pronto));
+
+            yaml = (Map<String, Object>) reader.read();
+        }
+
+        return signals;
+    }
+
     public static void setTransmitter(ConsumerIrManager CIM) {
         mCIM = CIM;
     }
